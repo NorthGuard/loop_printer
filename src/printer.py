@@ -2,8 +2,87 @@ import collections
 
 import regex
 
-from loop_printer.src.timer import _ITakeCareOfTime
-from .utility import _is_step, _do_post_function
+from loop_printer.src.timer import LoopPrinterTimer
+from .utility import is_step
+
+
+def fraction_header(fraction, indent, total_counts):
+    # Specified number of prints
+    if fraction > 1:
+        header = "\n" + indent + "Printing {} reports".format(fraction)
+        header += " for a total of {} tasks.".format(total_counts)
+
+    # Fractional number of prints
+    elif fraction > 0:
+        header = "\n" + indent + "Printing progress at fractions of {}".format(fraction)
+        header += " with a total of {} tasks.".format(total_counts)
+
+    # Absolute number of prints
+    else:
+        header = "\n" + indent + "Printing every {}".format(-fraction)
+        if total_counts is not None:
+            header += " of {} tasks."
+        else:
+            header += " task."
+
+    return header
+
+
+def make_header(fraction, time_left, time_left_method, total_counts, is_first_call,
+                header_message, indent, line_length):
+    header = ""
+
+    # Check if any header is needed
+    if is_first_call and header_message is not None:
+        # Start header-formatter with any given message from user
+        if header_message == "":
+            header = ""
+        else:
+            header = "\n" + indent + header_message
+
+        # Report of printing fraction
+        header += fraction_header(fraction=fraction, indent=indent, total_counts=total_counts)
+
+        # If time-left is computed, report method used to extrapolating time
+        if time_left:
+            # Special case for linear extrapolation
+            if time_left_method == "linear" or time_left_method == "poly1":
+                header += indent + "Estimating remaining time with linear extrapolation."
+
+            # Other polynomial methods
+            elif "poly" in time_left_method:
+                degree = int(regex.search("\d+", time_left_method.lower()).group(0))
+                degree = min(degree, 4)
+                header += indent + "Estimating remaining time with polynomial of degree {}".format(degree)
+
+        # Add finishing line to header
+        header += "\n" + indent + "-" * line_length
+
+    # Return header
+    if header == "":
+        return None
+    return header
+
+
+def ensure_fraction_and_total(fraction, list_or_total):
+    # If no list_or_total is given, then print after absolute number of steps.
+    if list_or_total is None:
+        total_counts = None
+        fraction = -max(round(abs(fraction)), 1)
+
+    # If a number is given as list_or_total, consider this the maximum expected number of iterations.
+    elif isinstance(list_or_total, int) or isinstance(list_or_total, float):
+        total_counts = int(list_or_total)
+
+    # If list_or_total is a sized-collection, determine its size and use that for the number of iterations.
+    elif isinstance(list_or_total, collections.Sized):
+        total_counts = len(list_or_total)
+
+    # Otherwise something incorrect was given as list_or_total
+    else:
+        raise ValueError("total_counts is not set to anything useful in LoopPrinter")
+
+    return fraction, total_counts
 
 
 class LoopPrinter(object):
@@ -11,10 +90,10 @@ class LoopPrinter(object):
         self.last_print_count = None  # type: int
         self.line_length = line_length
         self.single_line = False
-        self.indentation = 0
+        self.indentation = ""
 
         # Timing
-        self.timer = _ITakeCareOfTime()
+        self.timer = LoopPrinterTimer()
 
     def _reset(self):
         self.last_print_count = None  # type: int
@@ -27,7 +106,7 @@ class LoopPrinter(object):
                    count, list_or_total=None, fraction=0.1,  # Main options
                    *,  # Signals keyword-only arguments
                    name="Iteration", message=None, appending_messages=None,  # Messages
-                   header=True, header_message=None,  # Header
+                   header_message=None,  # Header
                    date_stamp=False, time_stamp=False,  # Time-stamps
                    time_left=False, time_left_method="linear",  # Time left estimation
                    total_time=False, avg_step_time=False, step_time=False,  # Computed timings
@@ -58,8 +137,10 @@ class LoopPrinter(object):
         :param [str] appending_messages: Messages to write on consecutive lines (makes print multi-lines).
 
         # Header:
-        :param bool header: Enables a header that is printed at first iteration.
         :param str header_message: Writes a message at the header.
+            None: No header
+            "": Auto-generated header, with no user message.
+            str: Auto-generated header, with user message.
 
         Time-stamps:
         :param bool date_stamp: Makes printer include date-stamp in print.
@@ -90,16 +171,8 @@ class LoopPrinter(object):
         :param dict print_options: A dictionary with options passed directly on to Python's print-function.
         """
 
-        # Number of loops and indexing
-        if list_or_total is None:
-            total_counts = None
-            fraction = -max(round(abs(fraction)), 1)
-        elif isinstance(list_or_total, int) or isinstance(list_or_total, float):
-            total_counts = int(list_or_total)
-        elif isinstance(list_or_total, collections.Sized):
-            total_counts = len(list_or_total)
-        else:
-            raise ValueError("total_counts is not set to anything useful in LoopPrinter")
+        # Ensure counting
+        fraction, total_counts = ensure_fraction_and_total(fraction=fraction, list_or_total=list_or_total)
 
         # Check if this is first call
         is_first_call = False
@@ -117,7 +190,7 @@ class LoopPrinter(object):
 
         # Is printing needed?
         auto_print = is_first_call or count == total_counts
-        do_print = _is_step(fraction, total_counts, count) or auto_print
+        do_print = is_step(fraction, total_counts, count) or auto_print
 
         # Update times and steps
         self.timer.update_times_steps(count=count, is_first_call=is_first_call)
@@ -125,7 +198,7 @@ class LoopPrinter(object):
         # Print on same line
         self.single_line = single_line
 
-        # Make time_microseconds an interger of precision
+        # Make time_microseconds an integer of precision
         if time_microseconds:
             if isinstance(time_microseconds, bool):
                 time_microseconds = 3
@@ -134,35 +207,21 @@ class LoopPrinter(object):
                 stamp_microseconds = 3
 
         # Indentation
-        self.indentation = indentation
-        indent = (" " * indentation if isinstance(indentation, int) else str(indentation))
+        self.indentation = " " * indentation if isinstance(indentation, int) else indentation
 
         # Header
-        if is_first_call and header:
-            formatter = "\n" + indent + header_message if header_message is not None else "\n"
-            if fraction > 1:
-                formatter += "\n" + indent + "Printing {} reports for a total of ".format(fraction)
-            elif fraction > 0:
-                formatter += "\n" + indent + "Printing progress at fractions of {} with a total of ".format(fraction)
-            else:
-                formatter += "\n" + indent + "Printing every {} of ".format(-fraction)
-            if total_counts is not None:
-                formatter += "{} tasks."
-            else:
-                formatter += "."
-            print(indent + formatter.format(total_counts))
+        header_string = make_header(fraction=fraction,
+                                    time_left=time_left,
+                                    time_left_method=time_left_method,
+                                    total_counts=total_counts,
+                                    is_first_call=is_first_call,
+                                    header_message=header_message,
+                                    indent=self.indentation,
+                                    line_length=self.line_length)
+        if header_string is not None:
+            print(header_string)
 
-            if time_left:
-                if time_left_method == "linear" or time_left_method == "poly1":
-                    print(indent + "Estimating remaining time with linear extrapolation.")
-                elif "poly" in time_left_method:
-                    degree = int(regex.search("\d+", time_left_method.lower()).group(0))
-                    degree = min(degree, 4)
-                    print(indent + "Estimating remaining time with polynomial of degree {}".format(degree))
-
-            print(indent + "-" * self.line_length)
-
-        # Print?
+        # Printing iteration?
         if do_print:
             # Timing
             time_message = self.timer.time_message(count=count,
@@ -200,7 +259,7 @@ class LoopPrinter(object):
                 print_options = {**print_options, "end": "\r"}
 
             # Print!
-            final_output = indent + formatter.format(name, count, total_counts)
+            final_output = self.indentation + formatter.format(name, count, total_counts)
             print(final_output, **print_options)
             if appending_messages is not None and message is not None:
                 main_stamp_length = len(final_output) - len(message)
@@ -217,9 +276,7 @@ class LoopPrinter(object):
         return do_print, count + (0 if first_count else 1)
 
     def end_line(self):
-        indent = (" " * self.indentation if isinstance(self.indentation, int) else str(self.indentation))
-        print(indent + "-" * self.line_length)
+        print(self.indentation + "-" * self.line_length)
 
     def print_line(self):
-        indent = (" " * self.indentation if isinstance(self.indentation, int) else str(self.indentation))
-        print(indent + "-" * self.line_length)
+        print(self.indentation + "-" * self.line_length)

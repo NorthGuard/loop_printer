@@ -8,7 +8,7 @@ import numpy as np
 from loop_printer.src.utility import _delta_time_str, _precision_on_microseconds, _get_difference_formatter
 
 
-class _ITakeCareOfTime:
+class LoopPrinterTimer:
     """
     This timer records the step-counts passed on to the LoopPrinter and records the times of being called.
     These is_first_call are used to compute various timing information such as time passed, estimated time left etc.

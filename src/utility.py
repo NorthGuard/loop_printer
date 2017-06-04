@@ -47,7 +47,7 @@ def _precision_on_microseconds(string, precision):
         return string
 
 
-def _is_step(fraction, n, count):
+def is_step(fraction, n, count):
     """
     Determines whether the current iteration is a step (an iteration with print).
     :param float fraction: Determines the frequency of prints.
@@ -69,7 +69,7 @@ def _is_step(fraction, n, count):
     current_multiplier = math.floor(count / step)
     current_split = current_multiplier * step
     # Check if passed step
-    return count - 1 < current_split <= count
+    return float(count - 1) < current_split <= float(count)
 
 
 def _delta_time_str(days, seconds, microseconds, use_microseconds=False):
@@ -102,25 +102,3 @@ def _delta_time_str(days, seconds, microseconds, use_microseconds=False):
     string = formatter.format(**temp)
     string = _precision_on_microseconds(string, use_microseconds)
     return string
-
-
-def _do_post_function(post_function, post_fraction, n, count, auto_print, do_print):
-    """
-    Run the post-function.
-    :param post_function: Function to run.
-    :param post_fraction: Fraction for running post-function.
-    :param int n: Total number of iterations.
-    :param int count: Current iteration.
-    :param bool auto_print: ???
-    :param bool do_print: ???
-    :return: bool
-    """
-    do_post_function = False
-    if post_function:
-        # Separate function step
-        if post_fraction:
-            if _is_step(post_fraction, n, count) or auto_print:
-                do_post_function = True
-        elif do_print:
-            do_post_function = True
-    return do_post_function
