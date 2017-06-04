@@ -1,88 +1,6 @@
-import collections
-
-import regex
-
 from loop_printer.src.timer import LoopPrinterTimer
+from loop_printer.src.utility import make_header, ensure_fraction_and_total
 from .utility import is_step
-
-
-def fraction_header(fraction, indent, total_counts):
-    # Specified number of prints
-    if fraction > 1:
-        header = "\n" + indent + "Printing {} reports".format(fraction)
-        header += " for a total of {} tasks.".format(total_counts)
-
-    # Fractional number of prints
-    elif fraction > 0:
-        header = "\n" + indent + "Printing progress at fractions of {}".format(fraction)
-        header += " with a total of {} tasks.".format(total_counts)
-
-    # Absolute number of prints
-    else:
-        header = "\n" + indent + "Printing every {}".format(-fraction)
-        if total_counts is not None:
-            header += " of {} tasks."
-        else:
-            header += " task."
-
-    return header
-
-
-def make_header(fraction, time_left, time_left_method, total_counts, is_first_call,
-                header_message, indent, line_length):
-    header = ""
-
-    # Check if any header is needed
-    if is_first_call and header_message is not None:
-        # Start header-formatter with any given message from user
-        if header_message == "":
-            header = ""
-        else:
-            header = "\n" + indent + header_message
-
-        # Report of printing fraction
-        header += fraction_header(fraction=fraction, indent=indent, total_counts=total_counts)
-
-        # If time-left is computed, report method used to extrapolating time
-        if time_left:
-            # Special case for linear extrapolation
-            if time_left_method == "linear" or time_left_method == "poly1":
-                header += indent + "Estimating remaining time with linear extrapolation."
-
-            # Other polynomial methods
-            elif "poly" in time_left_method:
-                degree = int(regex.search("\d+", time_left_method.lower()).group(0))
-                degree = min(degree, 4)
-                header += indent + "Estimating remaining time with polynomial of degree {}".format(degree)
-
-        # Add finishing line to header
-        header += "\n" + indent + "-" * line_length
-
-    # Return header
-    if header == "":
-        return None
-    return header
-
-
-def ensure_fraction_and_total(fraction, list_or_total):
-    # If no list_or_total is given, then print after absolute number of steps.
-    if list_or_total is None:
-        total_counts = None
-        fraction = -max(round(abs(fraction)), 1)
-
-    # If a number is given as list_or_total, consider this the maximum expected number of iterations.
-    elif isinstance(list_or_total, int) or isinstance(list_or_total, float):
-        total_counts = int(list_or_total)
-
-    # If list_or_total is a sized-collection, determine its size and use that for the number of iterations.
-    elif isinstance(list_or_total, collections.Sized):
-        total_counts = len(list_or_total)
-
-    # Otherwise something incorrect was given as list_or_total
-    else:
-        raise ValueError("total_counts is not set to anything useful in LoopPrinter")
-
-    return fraction, total_counts
 
 
 class LoopPrinter(object):
@@ -160,7 +78,9 @@ class LoopPrinter(object):
 
         General settings:
         :param int first_count: What is the first number given? (necessary for counting)
-            False: one-indexing is used.
+            0: zero-indexing is used.
+            1: one-indexing is used.
+            int: some other values is the first number given.
         :param bool | int time_microseconds: Use microseconds when printing times.
         :param bool | int stamp_microseconds: Use microseconds when printing time stamp.
         :param int | str indentation: Indentation of print.
@@ -195,10 +115,10 @@ class LoopPrinter(object):
         # Update times and steps
         self.timer.update_times_steps(count=count, is_first_call=is_first_call)
 
-        # Print on same line
+        # Setting for printing on same line
         self.single_line = single_line
 
-        # Make time_microseconds an integer of precision
+        # Make boolean microseconds-options an integer of precision
         if time_microseconds:
             if isinstance(time_microseconds, bool):
                 time_microseconds = 3
@@ -221,7 +141,7 @@ class LoopPrinter(object):
         if header_string is not None:
             print(header_string)
 
-        # Printing iteration?
+        # Iteration print
         if do_print:
             # Timing
             time_message = self.timer.time_message(count=count,
@@ -240,31 +160,33 @@ class LoopPrinter(object):
                 main_stamp = "{0} {1:" + str(len(str(total_counts))) + "d} / {2}"
             else:
                 main_stamp = "{0} {1}"
-
-            # Make sure message it okay
-            if message is not None:
-                message = message.replace("{", "{{").replace("}", "}}")
+            main_stamp = main_stamp.format(name, count, total_counts)
 
             # Printing formatter
             arrow_needed = time_stamp or date_stamp or step_time or avg_step_time or total_time or time_left
-            formatter = time_message + (" -> " if arrow_needed else "")
-            formatter += main_stamp + ((": " + message) if message else "")
+            final_string = time_message + (" -> " if arrow_needed else "")
+            final_string += main_stamp + ((": " + message) if message else "")
 
-            # Print options
-            if not print_options:
-                print_options = {}
-
-            # Options for printing on same line and post-function printing
+            # Options for print-function
+            print_options = print_options if print_options else {}
             if self.single_line:
                 print_options = {**print_options, "end": "\r"}
 
             # Print!
-            final_output = self.indentation + formatter.format(name, count, total_counts)
-            print(final_output, **print_options)
+            final_string = self.indentation + final_string
+            print(final_string, **print_options)
+
+            # Appended multi-line messages
             if appending_messages is not None and message is not None:
-                main_stamp_length = len(final_output) - len(message)
+
+                # Determine length of main stamp
+                main_stamp_length = len(final_string) - len(message)
+
+                # Append single string at end
                 if isinstance(appending_messages, str):
                     print(" "*main_stamp_length + appending_messages, **print_options)
+
+                # Append multiple strings at end
                 elif isinstance(appending_messages, list):
                     for item in appending_messages:
                         print(" " * main_stamp_length + item, **print_options)

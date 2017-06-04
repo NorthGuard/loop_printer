@@ -1,4 +1,7 @@
+import collections
 import math
+
+import regex
 
 
 def _get_difference_formatter(time_stamp_length, difference_selector, stamp):
@@ -102,3 +105,82 @@ def _delta_time_str(days, seconds, microseconds, use_microseconds=False):
     string = formatter.format(**temp)
     string = _precision_on_microseconds(string, use_microseconds)
     return string
+
+
+def fraction_header(fraction, indent, total_counts):
+    # Specified number of prints
+    if fraction > 1:
+        header = "\n" + indent + "Printing {} reports".format(fraction)
+        header += " for a total of {} tasks.".format(total_counts)
+
+    # Fractional number of prints
+    elif fraction > 0:
+        header = "\n" + indent + "Printing progress at fractions of {}".format(fraction)
+        header += " with a total of {} tasks.".format(total_counts)
+
+    # Absolute number of prints
+    else:
+        header = "\n" + indent + "Printing every {}".format(-fraction)
+        if total_counts is not None:
+            header += " of {} tasks."
+        else:
+            header += " task."
+
+    return header
+
+
+def make_header(fraction, time_left, time_left_method, total_counts, is_first_call,
+                header_message, indent, line_length):
+    header = ""
+
+    # Check if any header is needed
+    if is_first_call and header_message is not None:
+        # Start header-formatter with any given message from user
+        if header_message == "":
+            header = ""
+        else:
+            header = "\n" + indent + header_message
+
+        # Report of printing fraction
+        header += fraction_header(fraction=fraction, indent=indent, total_counts=total_counts)
+
+        # If time-left is computed, report method used to extrapolating time
+        if time_left:
+            # Special case for linear extrapolation
+            if time_left_method == "linear" or time_left_method == "poly1":
+                header += indent + "Estimating remaining time with linear extrapolation."
+
+            # Other polynomial methods
+            elif "poly" in time_left_method:
+                degree = int(regex.search("\d+", time_left_method.lower()).group(0))
+                degree = min(degree, 4)
+                header += indent + "Estimating remaining time with polynomial of degree {}".format(degree)
+
+        # Add finishing line to header
+        header += "\n" + indent + "-" * line_length
+
+    # Return header
+    if header == "":
+        return None
+    return header
+
+
+def ensure_fraction_and_total(fraction, list_or_total):
+    # If no list_or_total is given, then print after absolute number of steps.
+    if list_or_total is None:
+        total_counts = None
+        fraction = -max(round(abs(fraction)), 1)
+
+    # If a number is given as list_or_total, consider this the maximum expected number of iterations.
+    elif isinstance(list_or_total, int) or isinstance(list_or_total, float):
+        total_counts = int(list_or_total)
+
+    # If list_or_total is a sized-collection, determine its size and use that for the number of iterations.
+    elif isinstance(list_or_total, collections.Sized):
+        total_counts = len(list_or_total)
+
+    # Otherwise something incorrect was given as list_or_total
+    else:
+        raise ValueError("total_counts is not set to anything useful in LoopPrinter")
+
+    return fraction, total_counts
