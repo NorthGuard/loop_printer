@@ -33,8 +33,7 @@ class LoopPrinter(object):
                    total_time=False, avg_step_time=False, step_time=False,  # Computed timings
                    first_count=0, time_microseconds=False, stamp_microseconds=False,  # General settings
                    indentation=0, single_line=False,
-                   print_options=None,  # Options passed on
-                   post_function=None, post_fraction=None, post_print_same_line=True  # Post-print function
+                   print_options=None  # Options passed on
                    ):
         """
         Print-method for loops.
@@ -89,17 +88,6 @@ class LoopPrinter(object):
 
         Options passed on:
         :param dict print_options: A dictionary with options passed directly on to Python's print-function.
-
-        Post-print function:
-            A function can be given to the printer, which is run after every print.
-            This could for example be a syncing/backup-method for a database.
-        :param float post_fraction: Determines the fraction at which the after_print_function is run.
-            Works like fraction.
-            If none is given, then the function will be run at every print.
-        :param Callable post_function: A function that will run after printing
-            Can be used for saving progress at each print or a different interval.
-        :param bool post_print_same_line: Does the post-function need to print on same line?
-            Make False if function has no prints.
         """
 
         # Number of loops and indexing
@@ -130,9 +118,6 @@ class LoopPrinter(object):
         # Is printing needed?
         auto_print = is_first_call or count == total_counts
         do_print = _is_step(fraction, total_counts, count) or auto_print
-
-        # Is post-function call needed?
-        do_post_function = _do_post_function(post_function, post_fraction, total_counts, count, auto_print, do_print)
 
         # Update times and steps
         self.timer.update_times_steps(count=count, is_first_call=is_first_call)
@@ -214,10 +199,6 @@ class LoopPrinter(object):
             if self.single_line:
                 print_options = {**print_options, "end": "\r"}
 
-            # Print - with or without appending post-functions prints
-            if do_post_function and post_print_same_line:
-                print_options = {**print_options, "end": ". "}
-
             # Print!
             final_output = indent + formatter.format(name, count, total_counts)
             print(final_output, **print_options)
@@ -232,10 +213,6 @@ class LoopPrinter(object):
             # For next iteration
             self.last_print_count = count
 
-        # Post-print function call
-        if do_post_function:
-            post_function()
-
         # Return
         return do_print, count + (0 if first_count else 1)
 
@@ -246,5 +223,3 @@ class LoopPrinter(object):
     def print_line(self):
         indent = (" " * self.indentation if isinstance(self.indentation, int) else str(self.indentation))
         print(indent + "-" * self.line_length)
-
-
