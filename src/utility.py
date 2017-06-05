@@ -122,7 +122,7 @@ def fraction_header(fraction, indent, total_counts):
     else:
         header = "\n" + indent + "Printing every {}".format(-fraction)
         if total_counts is not None:
-            header += " of {} tasks."
+            header += " of {} tasks.".format(total_counts)
         else:
             header += " task."
 
@@ -148,13 +148,13 @@ def make_header(fraction, time_left, time_left_method, total_counts, is_first_ca
         if time_left:
             # Special case for linear extrapolation
             if time_left_method == "linear" or time_left_method == "poly1":
-                header += indent + "Estimating remaining time with linear extrapolation."
+                header += "\n" + indent + "Estimating remaining time with linear extrapolation."
 
             # Other polynomial methods
             elif "poly" in time_left_method:
                 degree = int(regex.search("\d+", time_left_method.lower()).group(0))
                 degree = min(degree, 4)
-                header += indent + "Estimating remaining time with polynomial of degree {}".format(degree)
+                header += "\n" + indent + "Estimating remaining time with {}-degree polynomial".format(degree)
 
         # Add finishing line to header
         header += "\n" + indent + "-" * line_length

@@ -1,158 +1,100 @@
+import random
 import time
 from loop_printer import LoopPrinter
 
+# Initialize
+loop_printer = LoopPrinter()
 
-printer = LoopPrinter()
-short_time = 0.2
-long_time = 0.5
 
-n_loops = 60
+# A for-loop and a while-loop
 
-the_list = range(0, 10)
-for idx in the_list:
-    printer.loop_print(idx, the_list, header_message="10 Loops with every print",
-                       fraction=10)
-print("\n")
+n = 4
+for idx in range(n):
+    loop_printer.loop_print(idx, n)
 
-print("60 loops with various numbers of prints:")
-for nr_prints in range(2, 7):
-    the_list = range(0, n_loops)
-    for idx in the_list:
-        printer.loop_print(idx, the_list, fraction=nr_prints,
-                           header_message="",
-                           indentation=3)
-print("\n")
-
-for nr_prints in range(2, 7):
-    the_list = range(0, n_loops)
-    for idx in the_list:
-        printer.loop_print(idx, the_list, header_message="",
-                           fraction=1.0 / nr_prints)
-print("\n")
-
-for step in range(2, 7):
-    print("\n{0} Loops with print at every {1}-step:".format(n_loops, step))
-    the_list = range(0, n_loops)
-    for idx in the_list:
-        printer.loop_print(idx, the_list, fraction=-step)
-print("\n")
-
-print("While loop with {0} iterations with print at every step and 1-indexing:".format(10))
+n = 4
 idx = 0
-while idx < 10:
+while idx < n:
+    loop_printer.loop_print(idx)
     idx += 1
-    printer.loop_print(idx, first_count=False)
-print("\n")
 
-for step in range(2, 7):
-    print("\nWhile loop with {0} iterations with print at every {1}-step:".format(n_loops, step))
-    idx = 0
-    while idx < n_loops:
-        printer.loop_print(idx, fraction=step)
-        idx += 1
-print("\n")
 
-print("10 Loops with 4 prints and time:")
-the_list = range(0, 10)
+# Time and date stamp
+
+n = 4
+for idx in range(n):
+    time.sleep(0.5)
+    loop_printer.loop_print(idx, n,
+                            time_stamp=True, date_stamp=True)
+
+
+# Name, message and percentage
+
+n = 4
+for idx in range(n):
+    loop_printer.loop_print(idx, n,
+                            name="Step", message="Message {}".format(idx + 1),
+                            percentage=True)
+
+
+# Header
+
+n = 4
+for idx in range(n):
+    loop_printer.loop_print(idx, n,
+                            header_message="HEADER")
+
+
+# Controlling when to print
+
+n = 10
+for idx in range(n):
+    loop_printer.loop_print(idx, n,
+                            fraction=-2, header_message="")
+
+n = 10
+for idx in range(n):
+    loop_printer.loop_print(idx, n,
+                            fraction=0.25, header_message="")
+
+n = 10
+for idx in range(n):
+    loop_printer.loop_print(idx, n,
+                            fraction=4, header_message="")
+
+
+# Estimating time left
+
+n = 10
+for idx in range(n):
+    time.sleep(0.5)
+    loop_printer.loop_print(idx, n, time_stamp=True,
+                            time_left=True, header_message="")
+
+
+n = 10
+for idx in range(n):
+    time.sleep(idx)
+    loop_printer.loop_print(idx, n, time_stamp=True,
+                            time_left=True, time_left_method="poly2", header_message="")
+
+
+# Other timings
+
+n = 10
+for idx in range(n):
+    time.sleep(random.randint(3, 6))
+    loop_printer.loop_print(idx, n,
+                            step_time=True, avg_step_time=True, total_time=True)
+
+# The works
+the_list = range(0, 20)
 for idx in the_list:
-    time.sleep(short_time)
-    printer.loop_print(idx, the_list, fraction=4, time_stamp=True)
-print("\n")
+    time.sleep(0.5)
+    loop_printer.loop_print(idx, the_list, fraction=0.25,
+                            name="Step", message="Awesome", percentage=True,
+                            header_message="The works.",
+                            date_stamp=True, time_stamp=True,
+                            step_time=True, avg_step_time=True, total_time=True, time_left=True)
+loop_printer.end_line()
 
-print("10 Loops with 4 prints and date:")
-the_list = range(0, 10)
-for idx in the_list:
-    printer.loop_print(idx, the_list, fraction=4, date_stamp=True)
-print("\n")
-
-print("10 Loops with 4 prints and date and time:")
-the_list = range(0, 10)
-for idx in the_list:
-    time.sleep(short_time)
-    printer.loop_print(idx, the_list, fraction=4, date_stamp=True, time_stamp=True)
-print("\n")
-
-print("10 Loops with 4 prints and detailed date and time:")
-the_list = range(0, 10)
-for idx in the_list:
-    time.sleep(short_time)
-    printer.loop_print(idx, the_list, fraction=4, date_stamp=True, time_stamp=True)
-print("\n")
-
-print("10 Loops with 4 prints and time to microseconds:")
-the_list = range(0, 10)
-for idx in the_list:
-    time.sleep(short_time)
-    printer.loop_print(idx, the_list, fraction=4, time_stamp=True, stamp_microseconds=True, time_microseconds=True)
-print("\n")
-
-print("10 Loops with 4 prints with name and message:")
-the_list = range(0, 10)
-for idx in the_list:
-    printer.loop_print(idx, the_list, fraction=4, name='name', message='message')
-print("\n")
-
-print("10 Loops, 4 prints with step-times:")
-the_list = range(0, 10)
-for idx in the_list:
-    time.sleep(long_time)
-    printer.loop_print(idx, the_list, fraction=4, step_time=True)
-print("\n")
-
-print("10 Loops, 4 prints with average times:")
-the_list = range(0, 10)
-for idx in the_list:
-    time.sleep(long_time)
-    printer.loop_print(idx, the_list, fraction=4, avg_step_time=True)
-print("\n")
-
-print("10 Loops, 4 prints with total-times:")
-the_list = range(0, 10)
-for idx in the_list:
-    time.sleep(long_time)
-    printer.loop_print(idx, the_list, fraction=4, total_time=True)
-print("\n")
-
-print("10 Loops, 4 prints with step-times and average times:")
-the_list = range(0, 10)
-for idx in the_list:
-    time.sleep(long_time)
-    printer.loop_print(idx, the_list, fraction=4, step_time=True, avg_step_time=True)
-print("\n")
-
-print("10 Loops, 4 prints with average times and total-times:")
-the_list = range(0, 10)
-for idx in the_list:
-    time.sleep(long_time)
-    printer.loop_print(idx, the_list, fraction=4, avg_step_time=True, total_time=True)
-print("\n")
-
-print("10 Loops, 4 prints with step-times and total-times:")
-the_list = range(0, 10)
-for idx in the_list:
-    time.sleep(long_time)
-    printer.loop_print(idx, the_list, fraction=4, step_time=True, total_time=True)
-print("\n")
-
-print("10 Loops, 4 prints with step-, average and total-times:")
-the_list = range(0, 10)
-for idx in the_list:
-    time.sleep(long_time)
-    printer.loop_print(idx, the_list, fraction=4, step_time=True, avg_step_time=True, total_time=True)
-print("\n")
-
-print("10 Loops with time-left calculation:")
-the_list = range(0, 10)
-for idx in the_list:
-    time.sleep(long_time)
-    printer.loop_print(idx, the_list, fraction=-1, time_left=True)
-print("\n")
-
-print("10 Loops with the works:")
-the_list = range(0, 10)
-for idx in the_list:
-    time.sleep(long_time)
-    printer.loop_print(idx, the_list, fraction=-1, date_stamp=True, time_stamp=True, message="Awesome",
-                       name="Process",
-                       step_time=True, avg_step_time=True, total_time=True, time_left=True)
-print("\n")

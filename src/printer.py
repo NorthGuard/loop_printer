@@ -21,9 +21,9 @@ class LoopPrinter(object):
         self.timer.reset()
 
     def loop_print(self,
-                   count, list_or_total=None, fraction=0.1,  # Main options
+                   count, list_or_total=None, fraction=-1,  # Main options
                    *,  # Signals keyword-only arguments
-                   name="Iteration", message=None, appending_messages=None,  # Messages
+                   name="Iteration", message=None, appending_messages=None, percentage=False, # Messages
                    header_message=None,  # Header
                    date_stamp=False, time_stamp=False,  # Time-stamps
                    time_left=False, time_left_method="linear",  # Time left estimation
@@ -34,8 +34,10 @@ class LoopPrinter(object):
                    ):
         """
         Print-method for loops.
-        Format: "<name> <count> / <total>: <message>" or "<name> <count>: <message>" (if no limit is given)
-        The print always occurs at the very first and very last iteration.
+        Format: "<name> <count> / <total>: <message>" or "<name> <count>: <message>" (if no limit is given).
+        The print always occurs at the very first and very last iteration (if limit is given).
+        The following line can be used in loops with no counter:
+            _, count = loop_printer.loop_print(count)
 
         Main options:
         :param int count: The counter in the loop.
@@ -45,16 +47,18 @@ class LoopPrinter(object):
         :param float fraction: Determines the number of prints.
             The printer always prints first and last iteration.
                 fraction < 0 : Print at every abs(fraction)th-iteration. Thus -10 will print every tenth iteration.
-            0 < fraction < 1 : Prints after every fraction-part. For example 0.2 will print at 20%, 40%, 60% etc.
-            1 < fraction     : Number of prints (excluding first print). Thus 10 will print at first iteration,
-                    followed by 10 prints, evenly spread out across the remaining iterations.
+            0 < fraction < 1 : Prints after every fraction-part.
+                               For example 0.2 will print at 0%, 20%, 40%, 60%, 80% and 100%.
+            1 < fraction     : Number of prints. 10 will thus print exactly 10 prints,
+                               evenly spread out across the iterations.
 
         Messages:
-        :param str name: Name of iteration. Examples: loop, iteration, processes, steps etc.
-        :param str message: Message to show after counters (right-appended).
+        :param str name: Name of iteration. Examples: loop, iteration, process, step etc.
+        :param str message: Message to show after print (right-appended).
         :param [str] appending_messages: Messages to write on consecutive lines (makes print multi-lines).
+        :param bool percentage: If true, the counter will show a percentage of the total number of iterations (if given)
 
-        # Header:
+        Header:
         :param str header_message: Writes a message at the header.
             None: No header
             "": Auto-generated header, with no user message.
@@ -81,8 +85,8 @@ class LoopPrinter(object):
             0: zero-indexing is used.
             1: one-indexing is used.
             int: some other values is the first number given.
-        :param bool | int time_microseconds: Use microseconds when printing times.
         :param bool | int stamp_microseconds: Use microseconds when printing time stamp.
+        :param bool | int time_microseconds: Use microseconds when printing other time-related information.
         :param int | str indentation: Indentation of print.
             A number prints that number of spaces. A string is prepended.
         :param bool single_line: Allows printing on the same line.
@@ -98,6 +102,10 @@ class LoopPrinter(object):
         is_first_call = False
         if first_count == count:
             is_first_call = True
+
+        # For zero-indexing add 1
+        if first_count == 0:
+            count += 1
 
         # Reset at first call
         if is_first_call:
@@ -158,6 +166,10 @@ class LoopPrinter(object):
             # Main stamp
             if total_counts:
                 main_stamp = "{0} {1:" + str(len(str(total_counts))) + "d} / {2}"
+
+                # Percentage
+                if percentage:
+                    main_stamp += " ({:7.2%})".format(float(count) / total_counts)
             else:
                 main_stamp = "{0} {1}"
             main_stamp = main_stamp.format(name, count, total_counts)
