@@ -1,1 +1,1 @@
-from loop_printer.src.printer import LoopPrinter
+from loop_printer.src import LoopPrinter

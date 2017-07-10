@@ -2,6 +2,8 @@
 
 The LoopPrinter-class of these files does exactly what you would expect. It prints loops.  
 
+Run `python -m loop_printer` to run a ton of different loop-prints. 
+
 The idea is to pack a lot of typically required features into a one-liner method called in a loop, while using 
 keyword-arguments to tick off wanted settings.  
 

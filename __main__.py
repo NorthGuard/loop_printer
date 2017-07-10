@@ -1,6 +1,6 @@
 import random
 import time
-from loop_printer import LoopPrinter
+from loop_printer.src.printer import LoopPrinter
 
 # Initialize
 loop_printer = LoopPrinter()

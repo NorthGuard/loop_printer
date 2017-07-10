@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 
 import regex
-import scipy as sc
 from scipy import optimize
 import numpy as np
 
@@ -33,7 +32,7 @@ class LoopPrinterTimer:
         """
         if is_first_call:
             self.start_time = datetime.now()
-            self.steps = [1]
+            self.steps = [count]
         else:
             self.time_stamps.append(datetime.now() - self.start_time)
             self.steps.append(count)

@@ -1,13 +1,11 @@
 from loop_printer.src.timer import LoopPrinterTimer
-from loop_printer.src.utility import make_header, ensure_fraction_and_total
-from .utility import is_step
+from loop_printer.src.utility import make_header, ensure_fraction_and_total, is_step
 
 
 class LoopPrinter(object):
     def __init__(self, line_length=75):
         self.last_print_count = None  # type: int
         self.line_length = line_length
-        self.single_line = False
         self.indentation = ""
 
         # Timing
@@ -15,7 +13,6 @@ class LoopPrinter(object):
 
     def _reset(self):
         self.last_print_count = None  # type: int
-        self.single_line = False
 
         # Timing
         self.timer.reset()
@@ -123,9 +120,6 @@ class LoopPrinter(object):
         # Update times and steps
         self.timer.update_times_steps(count=count, is_first_call=is_first_call)
 
-        # Setting for printing on same line
-        self.single_line = single_line
-
         # Make boolean microseconds-options an integer of precision
         if time_microseconds:
             if isinstance(time_microseconds, bool):
@@ -181,8 +175,8 @@ class LoopPrinter(object):
 
             # Options for print-function
             print_options = print_options if print_options else {}
-            if self.single_line:
-                print_options = {**print_options, "end": "\r"}
+            if single_line:
+                print_options = {**print_options, "end": "\r", "flush": True}
 
             # Print!
             final_string = self.indentation + final_string
