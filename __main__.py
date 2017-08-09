@@ -79,8 +79,16 @@ for idx in range(n):
                             time_left=True, time_left_method="poly2", header_message="")
 
 
-# Other timings
+# Estimating time left with different starting point
+n = 110
+n_start = 100
+for idx in range(n_start, n):
+    time.sleep(2)
+    loop_printer.loop_print(idx, n, fraction=5, time_stamp=True, first_count=n_start,
+                            time_left=True, header_message="")
 
+
+# Other timings
 n = 10
 for idx in range(n):
     time.sleep(random.randint(3, 6))

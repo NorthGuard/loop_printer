@@ -50,27 +50,32 @@ def _precision_on_microseconds(string, precision):
         return string
 
 
-def is_step(fraction, n, count):
+def is_step(fraction, n, count, first_count):
     """
     Determines whether the current iteration is a step (an iteration with print).
     :param float fraction: Determines the frequency of prints.
-    :param n: Total number of iterations.
-    :param count: Current iteration.
+    :param int n: Total number of iterations.
+    :param int count: Current iteration.
+    :param int first_count: Starting iteration.
     :return: bool
     """
     # Absolute steps
     if fraction < 0:
         mod = round(abs(fraction))
         return (count % mod) == 0
+
     # Convert to fraction
     if fraction > 1:
-        fraction = max(2, fraction) - 1.0
+        fraction = max(2.0, fraction) - 1.0
         fraction = 1.0 / fraction
+
     # Compute step
-    step = n * fraction
+    step = (n - first_count) * fraction
+
     # Find next split
     current_multiplier = math.floor(count / step)
     current_split = current_multiplier * step
+
     # Check if passed step
     return float(count - 1) < current_split <= float(count)
 
@@ -107,29 +112,38 @@ def _delta_time_str(days, seconds, microseconds, use_microseconds=False):
     return string
 
 
-def fraction_header(fraction, indent, total_counts):
+def fraction_header(fraction, indent, count, total_counts):
     # Specified number of prints
     if fraction > 1:
         header = "\n" + indent + "Printing {} reports".format(fraction)
-        header += " for a total of {} tasks.".format(total_counts)
+        if count == 1:
+            header += " for a total of {} tasks.".format(total_counts)
+        else:
+            header += " for tasks {} to {}.".format(count, total_counts)
 
     # Fractional number of prints
     elif fraction > 0:
         header = "\n" + indent + "Printing progress at fractions of {}".format(fraction)
-        header += " with a total of {} tasks.".format(total_counts)
+        if count == 1:
+            header += " with a total of {} tasks.".format(total_counts)
+        else:
+            header += " for tasks {} to {}.".format(count, total_counts)
 
     # Absolute number of prints
     else:
         header = "\n" + indent + "Printing every {}".format(-fraction)
         if total_counts is not None:
-            header += " of {} tasks.".format(total_counts)
+            if count == 1:
+                header += " of {} tasks.".format(total_counts)
+            else:
+                header += " task, for tasks {} to {}.".format(count, total_counts)
         else:
             header += " task."
 
     return header
 
 
-def make_header(fraction, time_left, time_left_method, total_counts, is_first_call,
+def make_header(count, fraction, time_left, time_left_method, total_counts, is_first_call,
                 header_message, indent, line_length):
     header = ""
 
@@ -142,7 +156,7 @@ def make_header(fraction, time_left, time_left_method, total_counts, is_first_ca
             header = "\n" + indent + header_message
 
         # Report of printing fraction
-        header += fraction_header(fraction=fraction, indent=indent, total_counts=total_counts)
+        header += fraction_header(fraction=fraction, indent=indent, count=count, total_counts=total_counts)
 
         # If time-left is computed, report method used to extrapolating time
         if time_left:

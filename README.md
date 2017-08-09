@@ -191,6 +191,26 @@ for idx in range(n):
 # 11:58:45 [Time left: 00:00:10] -> Iteration 10 / 10
 ```
 
+Time-left estimation with different starting point:
+```python
+n = 110
+n_start = 100
+for idx in range(n_start, n):
+    time.sleep(2)
+    loop_printer.loop_print(idx, n, fraction=5, time_stamp=True, first_count=n_start,
+                            time_left=True, header_message="")
+                            
+# Printing 5 reports for tasks 101 to 110.
+# Estimating remaining time with linear extrapolation.
+# ---------------------------------------------------------------------------
+# 13:27:37 [Time left:         ] -> Iteration 101 / 110
+# 13:27:39 [Time left:         ] -> Iteration 102 / 110
+# 13:27:43 [Time left: 00:00:14] -> Iteration 104 / 110
+# 13:27:47 [Time left: 00:00:10] -> Iteration 106 / 110
+# 13:27:51 [Time left: 00:00:06] -> Iteration 108 / 110
+# 13:27:55 [Time left: 00:00:02] -> Iteration 110 / 110
+```
+
 
 ##### Other timings
 ```python

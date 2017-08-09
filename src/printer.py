@@ -20,12 +20,13 @@ class LoopPrinter(object):
     def loop_print(self,
                    count, list_or_total=None, fraction=-1,  # Main options
                    *,  # Signals keyword-only arguments
-                   name="Iteration", message=None, appending_messages=None, percentage=False, # Messages
+                   first_count=0, is_zero_indexed=True,  # Enumeration settings
+                   name="Iteration", message=None, appending_messages=None, percentage=False,  # Messages
                    header_message=None,  # Header
                    date_stamp=False, time_stamp=False,  # Time-stamps
                    time_left=False, time_left_method="linear",  # Time left estimation
                    total_time=False, avg_step_time=False, step_time=False,  # Computed timings
-                   first_count=0, time_microseconds=False, stamp_microseconds=False,  # General settings
+                   time_microseconds=False, stamp_microseconds=False,  # General settings
                    indentation=0, single_line=False,
                    print_options=None  # Options passed on
                    ):
@@ -48,6 +49,12 @@ class LoopPrinter(object):
                                For example 0.2 will print at 0%, 20%, 40%, 60%, 80% and 100%.
             1 < fraction     : Number of prints. 10 will thus print exactly 10 prints,
                                evenly spread out across the iterations.
+
+        Enumeration:
+        :param int first_count: What is the first number given? (necessary for time-left estimation, header etc.)
+        :param bool is_zero_indexed: Specifies that the counter is
+            True: 0-indexed
+            False: 1-indexed
 
         Messages:
         :param str name: Name of iteration. Examples: loop, iteration, process, step etc.
@@ -78,10 +85,6 @@ class LoopPrinter(object):
         :param bool step_time: Time difference since last print
 
         General settings:
-        :param int first_count: What is the first number given? (necessary for counting)
-            0: zero-indexing is used.
-            1: one-indexing is used.
-            int: some other values is the first number given.
         :param bool | int stamp_microseconds: Use microseconds when printing time stamp.
         :param bool | int time_microseconds: Use microseconds when printing other time-related information.
         :param int | str indentation: Indentation of print.
@@ -101,8 +104,9 @@ class LoopPrinter(object):
             is_first_call = True
 
         # For zero-indexing add 1
-        if first_count == 0:
+        if is_zero_indexed:
             count += 1
+            first_count += 1
 
         # Reset at first call
         if is_first_call:
@@ -115,7 +119,7 @@ class LoopPrinter(object):
 
         # Is printing needed?
         auto_print = is_first_call or count == total_counts
-        do_print = is_step(fraction, total_counts, count) or auto_print
+        do_print = is_step(fraction=fraction, n=total_counts, count=count, first_count=first_count) or auto_print
 
         # Update times and steps
         self.timer.update_times_steps(count=count, is_first_call=is_first_call)
@@ -132,7 +136,8 @@ class LoopPrinter(object):
         self.indentation = " " * indentation if isinstance(indentation, int) else indentation
 
         # Header
-        header_string = make_header(fraction=fraction,
+        header_string = make_header(count=count,
+                                    fraction=fraction,
                                     time_left=time_left,
                                     time_left_method=time_left_method,
                                     total_counts=total_counts,
@@ -190,7 +195,7 @@ class LoopPrinter(object):
 
                 # Append single string at end
                 if isinstance(appending_messages, str):
-                    print(" "*main_stamp_length + appending_messages, **print_options)
+                    print(" " * main_stamp_length + appending_messages, **print_options)
 
                 # Append multiple strings at end
                 elif isinstance(appending_messages, list):

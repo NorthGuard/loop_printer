@@ -58,7 +58,7 @@ class LoopPrinterTimer:
             degree = int(regex.search("\d+", self.time_left_method.lower()).group(0))
 
             # First few samples can only be approximated with a low-degree polynomial
-            if n_steps < degree + 1:
+            if n_steps < degree + 2:
                 return None
 
             # Get seconds of each time-step
@@ -68,16 +68,16 @@ class LoopPrinterTimer:
             # Select polynomial based on degree (Forcing intersection at 0)
             if degree == 1:
                 def fit_func(params, x):
-                    return params[0] * x
+                    return params[0] + params[1] * x
             elif degree == 2:
                 def fit_func(params, x):
-                    return params[0] * x + params[1] * x ** 2
+                    return params[0] + params[1] * x + params[2] * x ** 2
             elif degree == 3:
                 def fit_func(params, x):
-                    return params[0] * x + params[1] * x ** 2 + params[2] * x ** 3
+                    return params[0] + params[1] * x + params[2] * x ** 2 + params[3] * x ** 3
             elif degree == 4:
                 def fit_func(params, x):
-                    return params[0] * x + params[1] * x ** 2 + params[2] * x ** 3 + params[3] * x ** 4
+                    return params[0] + params[1] * x + params[2] * x ** 2 + params[3] * x ** 3 + params[4] * x ** 4
             else:
                 raise NotImplementedError("ETA estimation using polynomial of degree > 4 has not been implemented "
                                           "(although it can easily be done).")
@@ -87,7 +87,7 @@ class LoopPrinterTimer:
                 return fit_func(p, x) - y
 
             # Initial values
-            init_p = np.array([1] * degree)
+            init_p = np.array([1] * (degree + 1))
 
             # Optimize polynomial
             p1 = optimize.leastsq(error, init_p, args=(steps, seconds))
