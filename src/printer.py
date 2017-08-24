@@ -98,6 +98,9 @@ class LoopPrinter(object):
         # Ensure counting
         fraction, total_counts = ensure_fraction_and_total(fraction=fraction, list_or_total=list_or_total)
 
+        # Ensure format
+        count = int(count)
+
         # Check if this is first call
         is_first_call = False
         if first_count == count:
