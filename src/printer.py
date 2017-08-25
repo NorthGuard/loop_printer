@@ -167,13 +167,13 @@ class LoopPrinter(object):
 
             # Main stamp
             if total_counts:
-                main_stamp = "{0} {1:" + str(len(str(total_counts))) + "d} / {2}"
+                main_stamp = "{0} {1:" + str(len(str(total_counts))) + ",d} / {2}"
 
                 # Percentage
                 if percentage:
                     main_stamp += " ({:7.2%})".format(float(count) / total_counts)
             else:
-                main_stamp = "{0} {1}"
+                main_stamp = "{0} {1:,d}"
             main_stamp = main_stamp.format(name, count, total_counts)
 
             # Printing formatter
