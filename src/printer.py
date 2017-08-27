@@ -167,7 +167,7 @@ class LoopPrinter(object):
 
             # Main stamp
             if total_counts:
-                main_stamp = "{0} {1:" + str(len(str(total_counts))) + ",d} / {2}"
+                main_stamp = "{0} {1:" + str(len(str(total_counts))) + ",d} / {2:,d}"
 
                 # Percentage
                 if percentage:
