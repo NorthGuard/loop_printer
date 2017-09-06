@@ -154,7 +154,7 @@ class LoopPrinter(object):
                                     total_counts=total_counts,
                                     is_first_call=is_first_call,
                                     header_message=header_message,
-                                    indent=header_indentation,
+                                    indent=self.header_indentation,
                                     line_length=self.line_length)
         if header_string is not None:
             print(header_string)
