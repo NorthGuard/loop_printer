@@ -4,6 +4,15 @@ import math
 import regex
 
 
+def convert_indentation(indentation):
+    """
+    Converts integer- or string- indentation into string indentation for prepending.
+    :param int | str indentation:
+    :return: str
+    """
+    return " " * indentation if isinstance(indentation, int) else indentation
+
+
 def _get_difference_formatter(time_stamp_length, difference_selector, stamp):
     """
     Creates a formatter for including the time-statistics.

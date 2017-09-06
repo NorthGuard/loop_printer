@@ -1,5 +1,5 @@
 from loop_printer.src.timer import LoopPrinterTimer
-from loop_printer.src.utility import make_header, ensure_fraction_and_total, is_step
+from loop_printer.src.utility import make_header, ensure_fraction_and_total, is_step, convert_indentation
 
 
 class LoopPrinter(object):
@@ -7,6 +7,7 @@ class LoopPrinter(object):
         self.last_print_count = None  # type: int
         self.line_length = line_length
         self.indentation = ""
+        self.header_indentation = ""
 
         # Timing
         self.timer = LoopPrinterTimer()
@@ -87,8 +88,9 @@ class LoopPrinter(object):
         General settings:
         :param bool | int stamp_microseconds: Use microseconds when printing time stamp.
         :param bool | int time_microseconds: Use microseconds when printing other time-related information.
-        :param int | str indentation: Indentation of print.
+        :param int | str | tuple indentation: Indentation of print.
             A number prints that number of spaces. A string is prepended.
+            A tuple does the same thing, but can contain two indentations: one for thea header and one for the lines.
         :param bool single_line: Allows printing on the same line.
 
         Options passed on:
@@ -136,7 +138,13 @@ class LoopPrinter(object):
                 stamp_microseconds = 3
 
         # Indentation
-        self.indentation = " " * indentation if isinstance(indentation, int) else indentation
+        if isinstance(indentation, tuple):
+            header_indentation = indentation[0]
+            indentation = indentation[1]
+        else:
+            header_indentation = indentation
+        self.header_indentation = convert_indentation(header_indentation)
+        self.indentation = convert_indentation(indentation)
 
         # Header
         header_string = make_header(count=count,
@@ -146,7 +154,7 @@ class LoopPrinter(object):
                                     total_counts=total_counts,
                                     is_first_call=is_first_call,
                                     header_message=header_message,
-                                    indent=self.indentation,
+                                    indent=header_indentation,
                                     line_length=self.line_length)
         if header_string is not None:
             print(header_string)
@@ -212,7 +220,7 @@ class LoopPrinter(object):
         return do_print, count + (0 if first_count else 1)
 
     def end_line(self):
-        print(self.indentation + "-" * self.line_length)
+        print(self.header_indentation + "-" * self.line_length)
 
     def print_line(self):
         print(self.indentation + "-" * self.line_length)
