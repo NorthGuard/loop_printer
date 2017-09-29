@@ -1,3 +1,5 @@
+import warnings
+
 from loop_printer.src.timer import LoopPrinterTimer
 from loop_printer.src.utility import make_header, ensure_fraction_and_total, is_step, convert_indentation
 
@@ -26,6 +28,7 @@ class LoopPrinter(object):
                    header_message=None,  # Header
                    date_stamp=False, time_stamp=False,  # Time-stamps
                    time_left=False, time_left_method="linear",  # Time left estimation
+                   time_memory=100,  # Number of samples to keep for estimating time left
                    total_time=False, avg_step_time=False, step_time=False,  # Computed timings
                    time_microseconds=False, stamp_microseconds=False,  # General settings
                    indentation=0, single_line=False,
@@ -79,6 +82,7 @@ class LoopPrinter(object):
             "linear"            : Linear estimation
             "polyX"             : Polynomial of 'X'-degree. Fx. "poly2"
             "exp"               : Exponential
+        :param int time_memory: Number of time-stamps to keep in memory for estimating timing-information.
 
         Computed timings:
         :param bool total_time: Time since first print (total time)
@@ -96,6 +100,7 @@ class LoopPrinter(object):
         Options passed on:
         :param dict print_options: A dictionary with options passed directly on to Python's print-function.
         """
+        time_memory
 
         # Ensure counting
         fraction, total_counts = ensure_fraction_and_total(fraction=fraction, list_or_total=list_or_total)
@@ -127,7 +132,7 @@ class LoopPrinter(object):
         do_print = is_step(fraction=fraction, n=total_counts, count=count, first_count=first_count) or auto_print
 
         # Update times and steps
-        self.timer.update_times_steps(count=count, is_first_call=is_first_call)
+        self.timer.update_times_steps(count=count, is_first_call=is_first_call, memory=time_memory)
 
         # Make boolean microseconds-options an integer of precision
         if time_microseconds:

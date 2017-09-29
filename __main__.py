@@ -98,11 +98,18 @@ for idx in range(n):
 # The works
 the_list = range(0, 20)
 for idx in the_list:
-    time.sleep(0.5)
+    time.sleep(1.5)
     loop_printer.loop_print(idx, the_list, fraction=0.25,
                             name="Step", message="Awesome", percentage=True,
                             header_message="The works.",
                             date_stamp=True, time_stamp=True,
                             step_time=True, avg_step_time=True, total_time=True, time_left=True)
 loop_printer.end_line()
+
+# Loop with large number of time-step samples
+n = 10000
+for idx in range(n):
+    time.sleep(0.001)
+    loop_printer.loop_print(idx, n, fraction=-470, time_stamp=True, time_left=True,
+                            message="Time stamps: {}".format(len(loop_printer.timer.time_stamps)))
 

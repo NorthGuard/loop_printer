@@ -17,25 +17,55 @@ class LoopPrinterTimer:
         self.start_time = None  # type: datetime
         self.steps = []  # type: [int]
         self.time_left_method = "linear"
+        self.stride_size = 1
+        self.step_nr = 0
+        self.last_time = None
 
     def reset(self):
         self.time_stamps = []  # type: [timedelta]
         self.start_time = None  # type: datetime
         self.steps = []  # type: [int]
         self.time_left_method = "linear"
+        self.stride_size = 1
+        self.step_nr = 0
+        self.last_time = None
 
-    def update_times_steps(self, count, is_first_call):
+    def update_times_steps(self, count, is_first_call, memory):
         """
         Updates the internal lists of information.
         :param int count: Current iteration.
         :param bool is_first_call: Indicates whether this is the first printing.
+        :param int memory: maximum number of elements to be remembered for estimating timing information.
         """
+        self.step_nr += 1
+        if len(self.time_stamps) > 0:
+            self.last_time = self.time_stamps[-1]
+
         if is_first_call:
             self.start_time = datetime.now()
             self.steps = [count]
+            self.step_nr = 1
+            self.stride_size = 1
         else:
-            self.time_stamps.append(datetime.now() - self.start_time)
-            self.steps.append(count)
+            if self.step_nr % self.stride_size == 0:
+                self.time_stamps.append(datetime.now() - self.start_time)
+                self.steps.append(count)
+
+        # Check whether memory is full
+        if len(self.time_stamps) > memory:
+            # Make downsampling indices
+            indices = list(range(0, len(self.time_stamps), 2))
+            if indices[-1] != len(self.time_stamps) - 1:
+                indices.append(len(self.time_stamps) - 1)
+
+            # Downsample previous datapoints
+            self.time_stamps = [self.time_stamps[idx] for idx in indices]
+            if indices[-1] != len(self.steps) - 1:
+                indices.append(len(self.steps) - 1)
+            self.steps = [self.steps[idx] for idx in indices]
+
+            # Increase stride for next datapoints
+            self.stride_size *= 2
 
     def estimate_time_left(self, use_microseconds, n):
         """
@@ -118,16 +148,18 @@ class LoopPrinterTimer:
             total_step = self.time_stamps[-1]  # Total time
             avg_step = self.time_stamps[-1]  # Average step
         else:
-            last_step = self.time_stamps[-1] - self.time_stamps[-2]  # Last step
+            last_step = self.time_stamps[-1] - self.last_time  # Last step
             total_step = self.time_stamps[-1]  # Total time
-            avg_step = self.time_stamps[-1] / len(self.time_stamps)  # Average step
+            avg_step = self.time_stamps[-1] / self.steps[-1]  # Average step
 
         # Last step
         last_step = _delta_time_str(last_step.days, last_step.seconds, last_step.microseconds,
                                     use_microseconds)
+
         # Total time
         total_step = _delta_time_str(total_step.days, total_step.seconds, total_step.microseconds,
                                      use_microseconds)
+
         # Average step
         avg_step = _delta_time_str(avg_step.days, avg_step.seconds, avg_step.microseconds,
                                    use_microseconds)
