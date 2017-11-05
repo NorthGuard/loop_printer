@@ -100,7 +100,6 @@ class LoopPrinter(object):
         Options passed on:
         :param dict print_options: A dictionary with options passed directly on to Python's print-function.
         """
-        time_memory
 
         # Ensure counting
         fraction, total_counts = ensure_fraction_and_total(fraction=fraction, list_or_total=list_or_total)
