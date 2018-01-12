@@ -37,6 +37,13 @@ for idx in range(n):
                             percentage=True)
 
 
+# Pre-message
+n = 7
+for idx in range(n):
+    loop_printer.loop_print(idx, n,  header_message="Pre-message on even numbers!",
+                            pre_message="pre-message" if idx % 2 == 0 else None)
+
+
 # Header
 
 n = 4
