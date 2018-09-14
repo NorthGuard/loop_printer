@@ -5,11 +5,12 @@ from loop_printer.src.utility import make_header, ensure_fraction_and_total, is_
 
 
 class LoopPrinter(object):
-    def __init__(self, line_length=75):
+    def __init__(self, line_length=75, print_function=print):
         self.last_print_count = None  # type: int
         self.line_length = line_length
         self.indentation = ""
         self.header_indentation = ""
+        self.print_function = print_function
 
         # Timing
         self.timer = LoopPrinterTimer()
@@ -33,7 +34,7 @@ class LoopPrinter(object):
                    total_time=False, avg_step_time=False, step_time=False,  # Computed timings
                    time_microseconds=False, stamp_microseconds=False,  # General settings
                    indentation=0, single_line=False,
-                   print_options=None,  # Options passed on
+                   print_options=None,  # Options passed on,
                    ):
         """
         Print-method for loops.
@@ -163,7 +164,7 @@ class LoopPrinter(object):
                                     indent=self.header_indentation,
                                     line_length=self.line_length)
         if header_string is not None:
-            print(header_string)
+            self.print_function(header_string)
 
         # Iteration print
         if do_print:
@@ -204,22 +205,22 @@ class LoopPrinter(object):
 
             # Pre-message
             if pre_message is not None:
-                print(" " * pre_message_length + pre_message, **print_options)
+                self.print_function(" " * pre_message_length + pre_message, **print_options)
 
             # Print!
-            print(final_string, **print_options)
+            self.print_function(final_string, **print_options)
 
             # Appended multi-line messages
             if appending_messages is not None and message is not None:
 
                 # Append single string at end
                 if isinstance(appending_messages, str):
-                    print(" " * pre_message_length + appending_messages, **print_options)
+                    self.print_function(" " * pre_message_length + appending_messages, **print_options)
 
                 # Append multiple strings at end
                 elif isinstance(appending_messages, list):
                     for item in appending_messages:
-                        print(" " * pre_message_length + item, **print_options)
+                        self.print_function(" " * pre_message_length + item, **print_options)
 
             # For next iteration
             self.last_print_count = count
@@ -228,7 +229,7 @@ class LoopPrinter(object):
         return do_print, count + (0 if first_count else 1)
 
     def end_line(self):
-        print(self.header_indentation + "-" * self.line_length)
+        self.print_function(self.header_indentation + "-" * self.line_length)
 
     def print_line(self):
-        print(self.indentation + "-" * self.line_length)
+        self.print_function(self.indentation + "-" * self.line_length)
